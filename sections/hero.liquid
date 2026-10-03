@@ -1,0 +1,41 @@
+<section class="hero snap-section snap-hero">
+  <div class="polaroids" aria-hidden="true">
+    <figure class="polaroid polaroid-a"><img src="{{ 'overlap.webp' | asset_url }}" alt="" width="1400" height="1092" decoding="async" fetchpriority="low"></figure>
+    <figure class="polaroid polaroid-b"><img src="{{ 'gothic.webp' | asset_url }}" alt="" width="1400" height="1058" decoding="async" fetchpriority="low"></figure>
+    <figure class="polaroid polaroid-c"><img src="{{ 'bow.webp' | asset_url }}" alt="" width="1400" height="1058" decoding="async" fetchpriority="low"></figure>
+  </div>
+  <div class="hero-copy">
+    <h1 class="mark-in">
+      <img class="mark-hover" src="{{ 'cold-hills-mark.png' | asset_url }}" alt="{{ shop.name | escape }}" width="2668" height="1012" decoding="async" fetchpriority="high">
+    </h1>
+    <p class="drop-line rise-in rise-delay-1">F/W26 Drop 1</p>
+    <div class="rise-in rise-delay-2">
+      <a class="btn btn-pop" style="margin-top:28px" href="{{ routes.all_products_collection_url }}">{{ section.settings.button }}</a>
+    </div>
+  </div>
+  <nav class="home-tabs">
+    <a href="/pages/our-story">Our Story</a>
+    <a href="/pages/social-media">Social Media</a>
+    <a href="/pages/contact">Contact</a>
+  </nav>
+  <div class="home-pays" aria-label="Payments we accept">
+    <img src="{{ 'visa.svg' | asset_url }}" alt="Visa" width="38" height="24">
+    <img src="{{ 'mastercard.svg' | asset_url }}" alt="Mastercard" width="38" height="24">
+    <img src="{{ 'amex.svg' | asset_url }}" alt="American Express" width="38" height="24">
+    <img src="{{ 'discover.svg' | asset_url }}" alt="Discover" width="38" height="24">
+    <img src="{{ 'paypal.svg' | asset_url }}" alt="PayPal" width="38" height="24">
+    <img src="{{ 'apple-pay.svg' | asset_url }}" alt="Apple Pay" width="38" height="24">
+    <img src="{{ 'google-pay.svg' | asset_url }}" alt="Google Pay" width="38" height="24">
+    <img src="{{ 'shop-pay.svg' | asset_url }}" alt="Shop Pay" width="38" height="24">
+  </div>
+</section>
+{% schema %}
+{
+  "name": "Hero",
+  "settings": [
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Name them, price them, and add a photo in Product." },
+    { "type": "text", "id": "button", "label": "Button", "default": "Product" }
+  ],
+  "presets": [{ "name": "Hero" }]
+}
+{% endschema %}

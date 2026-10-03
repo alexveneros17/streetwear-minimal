@@ -1,0 +1,36 @@
+<section class="wrap page">
+  <h1 style="font-size:42px;font-weight:500">Bag</h1>
+  {% if cart.item_count == 0 %}
+    <p style="margin-top:16px;color:#a39e96">Your bag is empty.</p>
+  {% else %}
+    {% for item in cart.items %}
+      <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2a2a">
+        <a href="{{ item.url }}" style="display:flex;gap:16px;flex:1;min-width:0">
+          <div style="width:84px;aspect-ratio:3/4;background:#161616;flex:none">{% if item.image %}{{ item.image | image_url: width: 200 | image_tag: loading: 'lazy', decoding: 'async', widths: '120, 200', alt: item.product.title }}{% endif %}</div>
+          <div>
+            <div>{{ item.product.title }}</div>
+            <div style="color:#a39e96">{{ item.variant.title }} · {{ item.final_price | money }}</div>
+            <form class="qty" action="{{ routes.cart_change_url }}" method="post">
+              <input type="hidden" name="id" value="{{ item.key }}">
+              <button type="submit" name="quantity" value="{{ item.quantity | minus: 1 }}" aria-label="Decrease quantity" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+              <span>{% if item.quantity < 10 %}0{% endif %}{{ item.quantity }}</span>
+              <button type="submit" name="quantity" value="{{ item.quantity | plus: 1 }}" aria-label="Increase quantity">+</button>
+            </form>
+          </div>
+        </a>
+        <form action="{{ routes.cart_change_url }}" method="post">
+          <input type="hidden" name="id" value="{{ item.key }}">
+          <input type="hidden" name="quantity" value="0">
+          <button class="btn line" style="margin-top:12px" type="submit">Remove</button>
+        </form>
+      </div>
+    {% endfor %}
+    <p style="margin:18px 0">Total {{ cart.total_price | money }}</p>
+    <form action="{{ routes.cart_url }}" method="post">
+      <button class="btn" type="submit" name="checkout">Checkout</button>
+    </form>
+  {% endif %}
+</section>
+{% schema %}
+{ "name": "Cart", "settings": [] }
+{% endschema %}

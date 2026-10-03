@@ -1,0 +1,20 @@
+<section class="wrap" style="padding:48px 0 80px">
+  <form class="search" action="{{ routes.search_url }}" method="get" role="search" style="margin-bottom:28px">
+    <input type="search" name="q" placeholder="Search" aria-label="Search products" value="{{ search.terms | escape }}">
+    <input type="hidden" name="type" value="product">
+  </form>
+  <p class="kicker">Search</p>
+  <h1 style="font-size:42px;font-weight:500;margin-top:8px">{{ search.terms | escape | default: 'Products' }}</h1>
+  <div class="grid" style="margin-top:24px">
+    {% for item in search.results %}
+      {% if item.object_type == 'product' %}
+        <a class="card" href="{{ item.url }}"><div class="media">{% if item.featured_image %}{{ item.featured_image | image_url: width: 720 | image_tag: loading: 'lazy', decoding: 'async', widths: '360, 540, 720', sizes: '(min-width: 900px) 25vw, 50vw', alt: item.title }}{% endif %}</div><div class="meta"><div>{{ item.title }}</div><div class="price">{{ item.price | money }}</div></div></a>
+      {% endif %}
+    {% else %}
+      <div class="empty">No matches.</div>
+    {% endfor %}
+  </div>
+</section>
+{% schema %}
+{ "name": "Search", "settings": [] }
+{% endschema %}

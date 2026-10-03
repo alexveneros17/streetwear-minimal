@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }}{% unless page_title contains shop.name %} – {{ shop.name }}{% endunless %}</title>
+  {% if page_description %}<meta name="description" content="{{ page_description | escape }}">{% endif %}
+  {{ content_for_header }}
+  {% if request.page_type == 'index' %}
+    <link rel="preload" as="image" href="{{ 'cold-hills-mark.png' | asset_url }}" fetchpriority="high">
+  {% endif %}
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+</head>
+<body{% if request.page_type == 'index' %} class="snap-home"{% endif %}>
+  {% section 'announcement' %}
+  {% section 'header' %}
+  <main>{{ content_for_layout }}</main>
+  {% section 'footer' %}
+  <script>
+    (function () {
+      var nodes = document.querySelectorAll("[data-reveal]");
+      if (!nodes.length) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+        nodes.forEach(function (n) { n.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-in");
+          io.unobserve(entry.target);
+        });
+      }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+      nodes.forEach(function (n) { io.observe(n); });
+    })();
+    (function () {
+      var bar = document.querySelector(".site-header");
+      if (!bar) return;
+      var last = window.scrollY;
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.addEventListener("scroll", function () {
+        var y = window.scrollY;
+        var delta = y - last;
+        last = y;
+        var typing = document.activeElement && document.activeElement.closest && document.activeElement.closest(".search");
+        if (reduce || y < 24 || typing) bar.classList.remove("is-up");
+        else if (delta > 12) bar.classList.add("is-up");
+        else if (delta < -12) bar.classList.remove("is-up");
+      }, { passive: true });
+    })();
+  </script>
+</body>
+</html>
