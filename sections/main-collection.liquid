@@ -1,0 +1,16 @@
+<section class="wrap" style="padding:48px 0 80px">
+  <h1 style="font-size:42px;letter-spacing:-.03em;font-weight:500">{{ collection.title }}</h1>
+  <div class="grid" style="margin-top:24px">
+    {% for product in collection.products %}
+      <a class="card reveal" data-reveal style="--reveal-delay: {{ forloop.index0 | times: 90 }}ms" href="{{ product.url }}">
+        <div class="media">{% if product.featured_image %}{{ product.featured_image | image_url: width: 720 | image_tag: loading: 'lazy', decoding: 'async', widths: '360, 540, 720', sizes: '(min-width: 900px) 25vw, 50vw', alt: product.title }}{% else %}Photo{% endif %}</div>
+        <div class="meta"><div>{{ product.title }}</div><div class="price">{{ product.price | money }}</div></div>
+      </a>
+    {% else %}
+      <div class="empty">No products yet. Add them in Shopify admin. Their prices appear here.</div>
+    {% endfor %}
+  </div>
+</section>
+{% schema %}
+{ "name": "Collection", "settings": [] }
+{% endschema %}

@@ -1,0 +1,238 @@
+<section class="wrap product">
+  <div class="media zoom-frame" data-zoom-frame tabindex="0" role="region" aria-roledescription="carousel" aria-label="Product images" style="aspect-ratio:3/4">
+    {% if product.images.size > 0 %}
+      {% for image in product.images %}
+        <div class="carousel-slide{% if forloop.first %} is-on{% endif %}" data-slide>
+          {% if forloop.first %}
+            {{ image | image_url: width: 1600 | image_tag: class: 'shot zoom-shot', loading: 'eager', fetchpriority: 'high', decoding: 'async', widths: '600, 900, 1200, 1600', sizes: '(min-width: 900px) 54vw, 100vw', alt: image.alt | default: product.title }}
+          {% else %}
+            {{ image | image_url: width: 1600 | image_tag: class: 'shot zoom-shot', loading: 'lazy', fetchpriority: 'low', decoding: 'async', widths: '600, 900, 1200, 1600', sizes: '(min-width: 900px) 54vw, 100vw', alt: image.alt | default: product.title }}
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}Photo{% endif %}
+    {% if product.images.size > 1 %}
+      <button type="button" class="carousel-btn prev" data-carousel="prev" aria-label="Previous image">‹</button>
+      <button type="button" class="carousel-btn next" data-carousel="next" aria-label="Next image">›</button>
+      <div class="carousel-dots">
+        {% for image in product.images %}
+          <button type="button" class="carousel-dot{% if forloop.first %} is-on{% endif %}" data-carousel-dot="{{ forloop.index0 }}" aria-label="Image {{ forloop.index }}"{% if forloop.first %} aria-current="true"{% endif %}></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if product.featured_image %}
+      <div class="zoom-controls">
+        <button type="button" class="zoom-btn" data-zoom="out" aria-label="Zoom out" disabled>−</button>
+        <button type="button" class="zoom-btn" data-zoom="in" aria-label="Zoom in">+</button>
+      </div>
+    {% endif %}
+  </div>
+  <div>
+    <p class="kicker">{{ product.type | default: 'Product' }}</p>
+    <h1 style="font-size:40px;font-weight:500;letter-spacing:-.03em;margin-top:8px">{{ product.title }}</h1>
+    <p class="price-lg" data-product-price>{{ product.selected_or_first_available_variant.price | money }}</p>
+    <div style="color:#a39e96;line-height:1.7">{{ product.description }}</div>
+    {% form 'product', product, class: 'js-product' %}
+      {% unless product.has_only_default_variant %}
+        {% for option in product.options_with_values %}
+          {% assign opt_name = option.name | downcase %}
+          {% assign is_color = false %}
+          {% if opt_name contains 'color' or opt_name contains 'colour' %}
+            {% assign is_color = true %}
+          {% endif %}
+          <fieldset class="opt-set{% if is_color %} is-color{% else %} is-size{% endif %}">
+            <legend class="kicker">{{ option.name }}</legend>
+            {% for value in option.values %}
+              {% assign val_label = value.name | default: value %}
+              {% assign swatch = '#3a3a3a' %}
+              {% assign val_key = val_label | downcase %}
+              {% case val_key %}
+                {% when 'black' %}{% assign swatch = '#0c0c0c' %}
+                {% when 'white', 'bone', 'off white', 'off-white', 'ivory' %}{% assign swatch = '#f4f1ec' %}
+                {% when 'red' %}{% assign swatch = '#c43b3b' %}
+                {% when 'grey', 'gray', 'charcoal' %}{% assign swatch = '#8a8a8a' %}
+                {% when 'navy' %}{% assign swatch = '#1c2430' %}
+                {% when 'green', 'sage' %}{% assign swatch = '#7d9a78' %}
+                {% when 'brown' %}{% assign swatch = '#6b4b3a' %}
+              {% endcase %}
+              {% if value.swatch and value.swatch.color %}
+                {% assign swatch = value.swatch.color %}
+              {% endif %}
+              <label class="opt">
+                <input
+                  type="radio"
+                  name="option-{{ option.position }}"
+                  value="{{ val_label | escape }}"
+                  {% if product.selected_or_first_available_variant.options[forloop.parentloop.index0] == val_label %}checked{% endif %}
+                >
+                {% if is_color %}<span class="swatch" style="background: {{ swatch }}"></span>{% endif %}
+                <span>{{ val_label }}</span>
+              </label>
+            {% endfor %}
+          </fieldset>
+        {% endfor %}
+      {% endunless %}
+      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      <button class="btn" type="submit">Add to bag</button>
+    {% endform %}
+    <script type="application/json" data-product-variants>{{ product.variants | json }}</script>
+  </div>
+</section>
+<script>
+  (function () {
+    var form = document.querySelector(".js-product");
+    var data = document.querySelector("[data-product-variants]");
+    if (!form || !data) return;
+    var variants = JSON.parse(data.textContent || "[]");
+    var idInput = form.querySelector('[name="id"]');
+    var price = document.querySelector("[data-product-price]");
+    var button = form.querySelector('[type="submit"]');
+    function money(cents) {
+      return "$" + (cents / 100).toFixed(2);
+    }
+    function sync() {
+      var chosen = [];
+      form.querySelectorAll("fieldset").forEach(function (set) {
+        var checked = set.querySelector("input:checked");
+        chosen.push(checked ? checked.value : "");
+      });
+      var match = variants.find(function (variant) {
+        return variant.options.every(function (option, i) { return option === chosen[i]; });
+      });
+      if (!match) return;
+      idInput.value = match.id;
+      if (price) price.textContent = money(match.price);
+      button.disabled = !match.available;
+      button.textContent = match.available ? "Add to bag" : "Sold out";
+    }
+    form.addEventListener("change", sync);
+  })();
+  (function () {
+    var frame = document.querySelector("[data-zoom-frame]");
+    if (!frame) return;
+    var slides = frame.querySelectorAll("[data-slide]");
+    if (!slides.length && !frame.querySelector("img")) return;
+    var minScale = 1;
+    var maxScale = 2.75;
+    var scale = 1;
+    var pan = { x: 0, y: 0 };
+    var index = 0;
+    var mode = null;
+    var swipe = null;
+    var startDist = 1;
+    var startScale = 1;
+    var startPan = { x: 0, y: 0 };
+    var startX = 0;
+    var startY = 0;
+    var outBtn = frame.querySelector('[data-zoom="out"]');
+    var inBtn = frame.querySelector('[data-zoom="in"]');
+    function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+    function current() {
+      var slide = frame.querySelector(".carousel-slide.is-on") || slides[0];
+      return (slide && slide.querySelector("img")) || frame.querySelector("img");
+    }
+    function apply(nextScale, nextPan) {
+      var img = current();
+      if (!img) return;
+      var s = clamp(nextScale, minScale, maxScale);
+      var box = frame.getBoundingClientRect();
+      var maxX = (box.width * (s - 1)) / 2;
+      var maxY = (box.height * (s - 1)) / 2;
+      pan = s <= 1 ? { x: 0, y: 0 } : { x: clamp(nextPan.x, -maxX, maxX), y: clamp(nextPan.y, -maxY, maxY) };
+      scale = s;
+      img.style.transform = "translate(" + pan.x + "px, " + pan.y + "px) scale(" + scale + ")";
+      if (outBtn) outBtn.disabled = scale <= minScale;
+      if (inBtn) inBtn.disabled = scale >= maxScale;
+    }
+    function show(next) {
+      if (slides.length < 2) return;
+      index = (next + slides.length) % slides.length;
+      slides.forEach(function (slide, n) { slide.classList.toggle("is-on", n === index); });
+      frame.querySelectorAll("[data-carousel-dot]").forEach(function (dot, n) {
+        var on = n === index;
+        dot.classList.toggle("is-on", on);
+        if (on) dot.setAttribute("aria-current", "true");
+        else dot.removeAttribute("aria-current");
+      });
+      apply(1, { x: 0, y: 0 });
+    }
+    function gap(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1; }
+    frame.addEventListener("click", function (event) {
+      var slideBtn = event.target.closest("[data-carousel]");
+      if (slideBtn) {
+        show(index + (slideBtn.getAttribute("data-carousel") === "next" ? 1 : -1));
+        return;
+      }
+      var dot = event.target.closest("[data-carousel-dot]");
+      if (dot) {
+        show(Number(dot.getAttribute("data-carousel-dot")));
+        return;
+      }
+      var btn = event.target.closest("[data-zoom]");
+      if (!btn || btn.disabled) return;
+      apply(scale + (btn.getAttribute("data-zoom") === "in" ? 0.5 : -0.5), pan);
+    });
+    frame.addEventListener("touchstart", function (event) {
+      var img = current();
+      if (event.touches.length === 2) {
+        mode = "pinch";
+        swipe = null;
+        startDist = gap(event.touches[0], event.touches[1]);
+        startScale = scale;
+        startPan = { x: pan.x, y: pan.y };
+        if (img) img.classList.add("is-live");
+      } else if (event.touches.length === 1) {
+        swipe = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        if (scale > 1) {
+          mode = "pan";
+          startPan = { x: pan.x, y: pan.y };
+          startX = event.touches[0].clientX;
+          startY = event.touches[0].clientY;
+          if (img) img.classList.add("is-live");
+        }
+      }
+    }, { passive: true });
+    frame.addEventListener("touchmove", function (event) {
+      if (mode === "pinch" && event.touches.length === 2) {
+        event.preventDefault();
+        apply(startScale * (gap(event.touches[0], event.touches[1]) / startDist), startPan);
+      } else if (mode === "pan" && event.touches.length === 1) {
+        event.preventDefault();
+        apply(scale, {
+          x: startPan.x + event.touches[0].clientX - startX,
+          y: startPan.y + event.touches[0].clientY - startY
+        });
+      }
+    }, { passive: false });
+    function stop(event) {
+      if (swipe && scale <= 1 && event.changedTouches && event.changedTouches[0]) {
+        var dx = event.changedTouches[0].clientX - swipe.x;
+        var dy = event.changedTouches[0].clientY - swipe.y;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) show(index + (dx < 0 ? 1 : -1));
+      }
+      mode = null;
+      swipe = null;
+      var img = current();
+      if (img) img.classList.remove("is-live");
+    }
+    frame.addEventListener("touchend", stop);
+    frame.addEventListener("touchcancel", stop);
+    document.addEventListener("keydown", function (event) {
+      var target = event.target;
+      if (target && ((target.matches && target.matches("input, textarea, select")) || target.isContentEditable)) return;
+      var inside = frame.contains(target);
+      var idle = !target || target === document.body || target === document.documentElement;
+      if (!inside && !idle) return;
+      if (event.key === "ArrowRight") { event.preventDefault(); show(index + 1); }
+      else if (event.key === "ArrowLeft") { event.preventDefault(); show(index - 1); }
+      else if (event.key === "Home") { event.preventDefault(); show(0); }
+      else if (event.key === "End") { event.preventDefault(); show(slides.length - 1); }
+      else if (event.key === "+" || event.key === "=") { event.preventDefault(); apply(scale + 0.5, pan); }
+      else if (event.key === "-" || event.key === "_") { event.preventDefault(); apply(scale - 0.5, pan); }
+      else if (event.key === "Escape") apply(1, { x: 0, y: 0 });
+    });
+  })();
+</script>
+{% schema %}
+{ "name": "Product", "settings": [] }
+{% endschema %}

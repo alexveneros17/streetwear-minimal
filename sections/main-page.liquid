@@ -1,0 +1,10 @@
+<section class="wrap page">
+  <h1 style="font-size:42px;font-weight:500;margin-bottom:16px">{{ page.title }}</h1>
+  <div>{{ page.content }}</div>
+  {% if page.handle == 'social-media' %}
+    <p style="margin-top:18px"><a href="https://www.instagram.com/cold.hills/" target="_blank" rel="noopener noreferrer" aria-label="@cold.hills"><img src="{{ 'instagram.svg' | asset_url }}" alt="" width="32" height="32"></a></p>
+  {% endif %}
+</section>
+{% schema %}
+{ "name": "Page", "settings": [] }
+{% endschema %}
